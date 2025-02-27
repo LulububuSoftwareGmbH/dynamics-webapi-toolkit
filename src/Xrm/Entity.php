@@ -225,4 +225,11 @@ class Entity implements \ArrayAccess {
             $value = clone $value;
         }
     }
+
+    /**
+     * @return string
+     */
+    public function __toString(): string {
+        return $this->Id ?? '';
+    }
 }

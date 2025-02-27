@@ -51,4 +51,11 @@ class EntityReference {
         $this->constructOverloaded( $entityName, $entityId, $keyValue );
     }
 
+    /**
+     * @return string
+     */
+    public function __toString(): string {
+        return $this->Name ?? '';
+    }
+
 }

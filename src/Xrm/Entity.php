@@ -21,10 +21,12 @@
 
 namespace AlexaCRM\Xrm;
 
+use ArrayAccess;
+
 /**
  * Represents a record in Dynamics 365.
  */
-class Entity implements \ArrayAccess {
+class Entity implements ArrayAccess {
 
     use EntityLikeTrait;
 
@@ -71,7 +73,7 @@ class Entity implements \ArrayAccess {
      * @param string|KeyAttributeCollection|null $entityId Record ID, KeyAttributeCollection, or key name
      * @param mixed $keyValue Key value
      */
-    public function __construct( string $entityName = null, $entityId = null, $keyValue = null ) {
+    public function __construct( ?string $entityName = null, $entityId = null, $keyValue = null ) {
         $this->attributeState = new AttributeState();
         $this->constructOverloaded( $entityName, $entityId, $keyValue );
     }
@@ -97,7 +99,7 @@ class Entity implements \ArrayAccess {
      * @return mixed|null
      */
     public function GetAttributeValue( string $attribute ) {
-        if ( !$this->Contains( $attribute ) ) {
+        if ( ! $this->Contains( $attribute ) ) {
             return null;
         }
 
@@ -114,7 +116,7 @@ class Entity implements \ArrayAccess {
      * @return string
      */
     public function GetFormattedAttributeValue( string $attribute ): string {
-        if ( !array_key_exists( $attribute, $this->FormattedValues ) ) {
+        if ( ! array_key_exists( $attribute, $this->FormattedValues ) ) {
             return '';
         }
 
@@ -160,7 +162,7 @@ class Entity implements \ArrayAccess {
      *
      * @param mixed $offset
      *
-     * @return boolean true on success or false on failure.
+     * @return bool true on success or false on failure.
      */
     public function offsetExists( $offset ): bool {
         return $this->Contains( $offset );
@@ -218,18 +220,11 @@ class Entity implements \ArrayAccess {
         $this->attributeState = clone $this->attributeState;
 
         foreach ( $this->Attributes as $field => &$value ) {
-            if ( !is_object( $value ) ) {
+            if ( ! is_object( $value ) ) {
                 continue;
             }
 
             $value = clone $value;
         }
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString(): string {
-        return $this->Id ?? '';
     }
 }

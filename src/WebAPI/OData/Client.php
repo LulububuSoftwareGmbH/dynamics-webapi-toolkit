@@ -195,7 +195,7 @@ class Client {
         }
 
         if ( $this->settings->callerID !== null ) {
-            $headers = array_merge( [ 'MSCRMCallerID' => '$this->settings->callerID' ], $headers );
+            $headers = array_merge( [ 'MSCRMCallerID' => $this->settings->callerID ], $headers );
         }
 
         try {

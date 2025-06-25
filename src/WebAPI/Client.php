@@ -50,9 +50,9 @@ class Client implements IOrganizationService {
      */
     protected ODataClient $client;
 
-    protected ?string $MSCRMCallerID;
+    protected ?string $MSCRMCallerID = null;
 
-    protected ?string $callerObjectId;
+    protected ?string $callerObjectId = null;
 
     protected UpsertBehaviorEnum $upsertBehavior;
 

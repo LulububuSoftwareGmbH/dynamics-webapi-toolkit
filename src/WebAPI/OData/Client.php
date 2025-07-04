@@ -252,8 +252,17 @@ class Client {
                 }
             }
 
+            // Start timing
+            $startTime = microtime( true );
+
             try {
+				$this->getLogger()->debug( "Starting {$method} {$url}", [
+                	'payload' => $data,
+                ] );
                 $response = $this->getHttpClient()->request( $method, $url, $payload );
+	            // Calculate timing
+            	$endTime = microtime( true );
+            	$duration = round( ( $endTime - $startTime ) * 1000, 2 ); // Convert to milliseconds
             } catch ( ClientException $e ) {
                 if ( $this->authMiddleware instanceof OnPremiseAuthMiddleware && $e->getResponse()->getStatusCode() === 401 ) {
                     $this->authMiddleware->refreshToken();
@@ -262,12 +271,18 @@ class Client {
                     $this->exceptionHandler( $e, $method, $url, $data );
                     throw new ODataException( $e->getResponse()->getStatusCode(), $e );
                 }
+            } finally {
+                $this->getLogger()->debug( "Completed {$method} {$url}", [
+                    'payload' => $data,
+                    'responseHeaders' => $response->getHeaders(),
+                    'responseBody' => $response->getBody()->getContents(),
+                    'timing' => [
+                        'duration_ms' => $duration,
+                        'start_time' => $startTime,
+                        'end_time' => $endTime,
+                    ],
+                ] );
             }
-            $this->getLogger()->debug( "Completed {$method} {$url}", [
-                'payload' => $data,
-                'responseHeaders' => $response->getHeaders(),
-                'responseBody' => $response->getBody()->getContents(),
-            ] );
 
             $responseCookie = $this->getHttpClient()->getConfig( 'cookies' );
             if ( !empty( $responseCookie ) && !$cache->isHit() ) {

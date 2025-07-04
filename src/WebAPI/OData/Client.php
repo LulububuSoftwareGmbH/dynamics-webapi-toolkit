@@ -257,9 +257,11 @@ class Client {
 
             try {
 				$this->getLogger()->debug( "Starting {$method} {$url}", [
-                	'payload' => $data,
+                	'payload' => $payload,
                 ] );
+                
                 $response = $this->getHttpClient()->request( $method, $url, $payload );
+
 	            // Calculate timing
             	$endTime = microtime( true );
             	$duration = round( ( $endTime - $startTime ) * 1000, 2 ); // Convert to milliseconds
@@ -273,7 +275,6 @@ class Client {
                 }
             } finally {
                 $this->getLogger()->debug( "Completed {$method} {$url}", [
-                    'payload' => $data,
                     'responseHeaders' => $response->getHeaders(),
                     'responseBody' => $response->getBody()->getContents(),
                     'timing' => [

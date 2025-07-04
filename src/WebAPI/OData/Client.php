@@ -275,8 +275,8 @@ class Client {
                 }
             } finally {
                 $this->getLogger()->debug( "Completed {$method} {$url}", [
-                    'responseHeaders' => $response->getHeaders(),
-                    'responseBody' => $response->getBody()->getContents(),
+                    'responseHeaders' => $response?->getHeaders(),
+                    'responseBody' => $response?->getBody()?->getContents(),
                     'timing' => [
                         'duration_ms' => $duration,
                         'start_time' => $startTime,

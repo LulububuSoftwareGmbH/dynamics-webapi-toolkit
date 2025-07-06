@@ -262,9 +262,6 @@ class Client {
                 
                 $response = $this->getHttpClient()->request( $method, $url, $payload );
 
-	            // Calculate timing
-            	$endTime = microtime( true );
-            	$duration = round( ( $endTime - $startTime ) * 1000, 2 ); // Convert to milliseconds
             } catch ( ClientException $e ) {
                 if ( $this->authMiddleware instanceof OnPremiseAuthMiddleware && $e->getResponse()->getStatusCode() === 401 ) {
                     $this->authMiddleware->refreshToken();
@@ -274,6 +271,10 @@ class Client {
                     throw new ODataException( $e->getResponse()->getStatusCode(), $e );
                 }
             } finally {
+	            // Calculate timing
+            	$endTime = microtime( true );
+            	$duration = round( ( $endTime - $startTime ) * 1000, 2 ); // Convert to milliseconds
+
                 $this->getLogger()->debug( "Completed {$method} {$url}", [
                     'responseHeaders' => $response?->getHeaders(),
                     'responseBody' => $response?->getBody()?->getContents(),

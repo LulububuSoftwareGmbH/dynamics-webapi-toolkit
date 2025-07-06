@@ -254,7 +254,8 @@ class Client {
 
             // Start timing
             $startTime = microtime( true );
-
+            $response = null;
+            
             try {
 				$this->getLogger()->debug( "Starting {$method} {$url}", [
                 	'payload' => $payload,
@@ -263,12 +264,13 @@ class Client {
                 $response = $this->getHttpClient()->request( $method, $url, $payload );
 
             } catch ( ClientException $e ) {
-                if ( $this->authMiddleware instanceof OnPremiseAuthMiddleware && $e->getResponse()->getStatusCode() === 401 ) {
+                if ( $this->authMiddleware instanceof OnPremiseAuthMiddleware && $e->getResponse()?->getStatusCode() === 401 ) {
                     $this->authMiddleware->refreshToken();
                     $response = $this->getHttpClient()->request( $method, $url, $payload );
                 } else {
+                    $response = $e->getResponse() ?? null;
                     $this->exceptionHandler( $e, $method, $url, $data );
-                    throw new ODataException( $e->getResponse()->getStatusCode(), $e );
+                    throw new ODataException( $response?->getStatusCode(), $e );
                 }
             } finally {
 	            // Calculate timing

@@ -316,10 +316,8 @@ class SerializationHelper {
             }
             else { 
                 $nestedData = [];
-                $singleValue = false;
                 if ( $rawEntity->{$targetField} instanceof \stdClass ) {
                     $nestedData = [ $rawEntity->{$targetField} ];
-                    $singleValue = true;
                 } else {
                     $nestedData = (array)$rawEntity->{$targetField};
                 }                    
@@ -356,18 +354,7 @@ class SerializationHelper {
                         $data[] = $relatedEntityData;
                     }
                 }
-                if($singleValue) {
-                    if(is_array($data) && count($data) == 1) {
-                        // If we have a single value, we can assign it directly
-                        $targetEntity->Attributes[ $targetField ] = $data[0];
-                    } else {
-                        // Otherwise, assign the whole array
-                        $targetEntity->Attributes[ $targetField ] = $data;
-                    }
-                }
-                else {
-                    $targetEntity->RelatedEntities[ $targetField ] = $data;
-                }
+                $targetEntity->RelatedEntities[ $targetField ] = $data;
             }
         }
 

@@ -138,7 +138,7 @@ class SerializationHelper {
      * @throws OData\AuthenticationException
      * @throws OData\EntityNotSupportedException
      * @throws OData\TransportException
-     * 
+     *
      */
     public function deserializeEntity( object $rawEntity, EntityReference $reference, ?array $attributeToEntityMap = null ): Entity {
         $metadata = $this->client->getMetadata();
@@ -212,96 +212,6 @@ class SerializationHelper {
                 }
             }
 
-            if ( !is_array( $targetValue ) ) {
-                $targetEntity->Attributes[ $targetField ] = $targetValue;
-
-                // Import formatted value.
-                if ( property_exists( $rawEntity, $formattedValueField ) ) {
-                    $targetEntity->FormattedValues[ $targetField ] = $rawEntity->{$formattedValueField};
-
-                    if ( $targetValue instanceof EntityReference ) {
-                        $targetValue->Name = $rawEntity->{$formattedValueField};
-                    }
-                }
-            }
-
-            if ( !empty( $rawEntity->{$targetField} ) && ( is_array( $rawEntity->{$targetField} ) || $rawEntity->{$targetField} instanceof \stdClass ) ) {
-                if ( $rawEntity->{$targetField} instanceof \stdClass ) {
-                    $data = [ (array)$rawEntity->{$targetField} ];
-                } else {
-                    $data = (array)$rawEntity->{$targetField};
-                }
-                $targetEntity->RelatedEntities[ $targetField ] = $this->getRelatedEntities( $data );
-            }
-        }
-
-        return $targetEntity;
-    }
-
-/**
-     * Creates a new Entity instance from the OData entity object.
-     *
-     * $attributeToEntityMap is used to create proper EntityReference instances
-     * for FetchXML results with aliased lookups - Web API loses lookup type information for these
-     * and doesn't produce appropriate annotations.
-     *
-     * @param object $rawEntity Output from the OData Client.
-     * @param EntityReference $reference A reference containing the logical name and ID of the processed record.
-     * @param array|null $attributeToEntityMap
-     *
-     * @return Entity
-     * @throws OData\AuthenticationException
-     * @throws OData\EntityNotSupportedException
-     * @throws OData\TransportException
-     */
-    public function deserializeEntity2( object $rawEntity, EntityReference $reference, ?array $attributeToEntityMap = null ): Entity {
-        $metadata = $this->client->getMetadata();
-        $entityMap = $metadata->getEntityMap( $reference->LogicalName );
-
-        $targetEntity = new Entity( $reference->LogicalName, $reference->Id );
-
-        $inboundMap = $entityMap->inboundMap;
-
-        foreach ( $rawEntity as $field => $value ) {
-            if ( stripos( $field, '@Microsoft' ) !== false || stripos( $field, '@OData' ) !== false ) {
-                continue;
-            }
-
-            if ( !array_key_exists( $field, $inboundMap ) ) {
-                $this->client->getLogger()->debug( "Received {$targetEntity->LogicalName}[$field] from Web API which is absent in the inbound attribute map", [
-                    'field' => $field,
-                    'inboundMap' => $inboundMap,
-                ] );
-            }
-
-            if ( $attributeToEntityMap === null && ( !array_key_exists( $field, $inboundMap ) || $value === null ) ) {
-                continue;
-            }
-
-            $targetField = array_key_exists( $field, $inboundMap ) ? $inboundMap[ $field ] : $field;
-            $logicalNameField = $field . Annotation::CRM_LOOKUPLOGICALNAME;
-            $formattedValueField = $field . Annotation::ODATA_FORMATTEDVALUE;
-            $targetValue = $value;
-
-            if ( $attributeToEntityMap !== null && str_contains( $targetField, '_x002e_' ) ) {
-                $targetField = str_replace( '_x002e_', '.', $targetField );
-            }
-
-            if ( property_exists( $rawEntity, $logicalNameField ) ) {
-                $targetValue = new EntityReference( $rawEntity->{$logicalNameField}, $value );
-            } elseif ( $attributeToEntityMap !== null
-                       && is_string( $value )
-                       && preg_match( '~^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$~', $value )
-                       && property_exists( $rawEntity, $formattedValueField ) ) {
-                /*
-                 * Map to a static entity type if we've got a GUID and a formatted value and no entity type information.
-                 * It means we're likely in the quirk mode and have to try guessing the lookup entity type.
-                 */
-                if ( array_key_exists( $targetField, $attributeToEntityMap ) ) {
-                    $targetValue = new EntityReference( $attributeToEntityMap[ $targetField ], $value );
-                }
-            }
-
             if ( !is_array( $targetValue ) && !( $targetValue instanceof \stdClass ) ) {
                 $targetEntity->Attributes[ $targetField ] = $targetValue;
 
@@ -313,44 +223,44 @@ class SerializationHelper {
                         $targetValue->Name = $rawEntity->{$formattedValueField};
                     }
                 }
-            }
-            else { 
+            } else {
                 $nestedData = [];
-                if ( $rawEntity->{$targetField} instanceof \stdClass ) {
-                    $nestedData = [ $rawEntity->{$targetField} ];
+                if ( $targetValue instanceof \stdClass ) {
+                    $nestedData = [ $targetValue ];
+                } elseif ( is_array( $targetValue ) ) {
+                    $nestedData = $targetValue;
                 } else {
-                    $nestedData = (array)$rawEntity->{$targetField};
-                }                    
+                    continue;
+                }
                 $data = [];
                 $relatedEntityType = null;
-                
+                $primaryKeyField = null;
+
                 if ( $attributeToEntityMap !== null && array_key_exists( $targetField, $attributeToEntityMap ) ) {
                     $relatedEntityType = $attributeToEntityMap[ $targetField ];
-                    $metadata = $this->client->getMetadata();
-                    $relatedEntityMap = $metadata->getEntityMap( $relatedEntityType );
-                    $primaryKeyField = $relatedEntityMap->key;
+                    if ( $relatedEntityType ) {
+                        $relatedEntityMap = $metadata->getEntityMap( $relatedEntityType );
+                        $primaryKeyField = $relatedEntityMap->key;
+                    }
                 }
-                
+
                 foreach ( $nestedData as $relatedEntityData ) {
                     if ( $relatedEntityData instanceof \stdClass ) {
                         $relatedEntityId = null;
-                        
-                        if ( $relatedEntityType ) {
-                            // Look for the primary key field in the related entity data
+
+                        if ( $relatedEntityType && $primaryKeyField ) {
                             if ( property_exists( $relatedEntityData, $primaryKeyField ) ) {
                                 $relatedEntityId = $relatedEntityData->{$primaryKeyField};
                             }
                         }
-                        
+
                         if ( $relatedEntityType && $relatedEntityId ) {
                             $er = new EntityReference( $relatedEntityType, $relatedEntityId );
-                            $data[] = $this->deserializeEntity2( $relatedEntityData, $er );
+                            $data[] = $this->deserializeEntity( $relatedEntityData, $er, $attributeToEntityMap );
                         } else {
-                            // Fallback: treat as raw data
-                            $data[] = (array)$relatedEntityData;
+                            $data[] = (array) $relatedEntityData;
                         }
                     } else {
-                        // Non-object data, just add as-is
                         $data[] = $relatedEntityData;
                     }
                 }

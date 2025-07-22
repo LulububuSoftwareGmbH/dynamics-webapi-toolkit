@@ -199,6 +199,12 @@ class Client {
      * @return array
      */
     private function getRequestHeaders( ?array $headers = [], ?string $method = 'GET' ): array {
+        $headers = array_merge( $headers, [
+            'Accept' => 'application/json',
+            'OData-MaxVersion' => '4.0',
+            'OData-Version' => '4.0',
+        ] );
+
         if ( in_array( $method, [ 'POST', 'PATCH' ] ) ) {
             $headers = array_merge( [ 'Content-Type' => 'application/json' ], $headers );
         }

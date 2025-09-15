@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright 2018-2019 AlexaCRM
+ * Copyright 2025 AlexaCRM
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
  * associated documentation files (the "Software"), to deal in the Software without restriction, including
@@ -27,34 +27,33 @@ if ( !defined( 'ABSPATH' ) ) {
 use Psr\Http\Message\RequestInterface;
 
 /**
- * Represents a generic middleware for modifying transfer request options for Guzzle Client.
+ * Represents a generic middleware for modifying request headers for Guzzle Client.
  */
-class TransferOptionMiddleware implements MiddlewareInterface {
+class RequestHeaderMiddleware implements MiddlewareInterface {
 
     /**
      * @var string
      */
-    protected string $optionName;
+    protected string $headerName;
 
     /**
      * @var mixed
      */
-    protected mixed $optionValue;
+    protected mixed $headerValue;
 
     /**
-     * TransferOptionMiddleware constructor.
+     * RequestHeaderMiddleware constructor.
      *
-     * @param string $optionName
-     * @param mixed $optionValue
+     * @param string $headerName
+     * @param mixed $headerValue
      */
-    public function __construct( string $optionName, mixed $optionValue ) {
-        $this->optionName = $optionName;
-        $this->optionValue = $optionValue;
+    public function __construct( string $headerName, mixed $headerValue ) {
+        $this->headerName = $headerName;
+        $this->headerValue = $headerValue;
     }
 
     /**
      * Returns a Guzzle-compliant middleware.
-     * Middleware should only operate with request options included in the transfer options list.
      *
      * @return callable
      *
@@ -65,7 +64,7 @@ class TransferOptionMiddleware implements MiddlewareInterface {
 
         return static function ( callable $handler ) use ( $self ) {
             return static function ( RequestInterface $request, array $options ) use ( $handler, $self ) {
-                $options[ $self->optionName ] = $self->optionValue;
+                $request = $request->withHeader( $self->headerName, $self->headerValue );
 
                 return $handler( $request, $options );
             };

@@ -14,7 +14,7 @@
     "php": ">=7.4",
     "psr/log": "^1.0",
     "psr/cache": "^1.0",
-    "elao/enum": "^1.6",
+    "elao/enum": "^2.5.3",
     "alexacrm/strong-serializer": "^2.0",
     "guzzlehttp/guzzle": "^7.0"
   },

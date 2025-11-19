@@ -96,7 +96,7 @@ class NullCacheItem implements CacheItemInterface {
      * @return static
      *   The invoked object.
      */
-    public function set(mixed value) {
+    public function set(mixed $value): static {
         return $this;
     }
 

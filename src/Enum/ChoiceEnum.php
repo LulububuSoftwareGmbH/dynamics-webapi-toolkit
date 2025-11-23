@@ -21,19 +21,67 @@
 
 namespace AlexaCRM\Enum;
 
-use Elao\Enum\ChoiceEnumTrait;
-use Elao\Enum\SimpleChoiceEnum;
-
 /**
  * Provides implementation for choice-based enumerable types.
  */
-abstract class ChoiceEnum extends SimpleChoiceEnum implements \JsonSerializable {
+abstract class ChoiceEnum implements \JsonSerializable {
+
+    protected $value;
 
     /** @internal */
     private static $guessedReadables = [];
 
     /** @internal */
     private static $guessedValues = [];
+
+    /** @internal */
+    private static $instances = [];
+
+    protected function __construct($value)
+    {
+        $this->value = $value;
+    }
+
+    /**
+     * Magic method to create enum instances by constant name.
+     * Example: OrderType::Ascending() creates an instance with value 0
+     */
+    public static function __callStatic($name, $arguments)
+    {
+        $class = static::class;
+        $constants = (new \ReflectionClass($class))->getConstants();
+
+        if (!isset($constants[$name])) {
+            throw new \BadMethodCallException("Undefined enum constant: {$class}::{$name}");
+        }
+
+        $value = $constants[$name];
+        $key = $class . '::' . $value;
+
+        if (!isset(self::$instances[$key])) {
+            self::$instances[$key] = new static($value);
+        }
+
+        return self::$instances[$key];
+    }
+
+    /**
+     * Get the enum value.
+     */
+    public function getValue()
+    {
+        return $this->value;
+    }
+
+    /**
+     * Get the readable name for this enum value.
+     */
+    public function getReadable(): string
+    {
+        $constants = (new \ReflectionClass(static::class))->getConstants();
+        $name = array_search($this->value, $constants, true);
+        return $name !== false ? $name : (string) $this->value;
+    }
 
     /**
      * @internal
@@ -69,7 +117,7 @@ abstract class ChoiceEnum extends SimpleChoiceEnum implements \JsonSerializable 
     }
 
     /**
-     * @see ChoiceEnumTrait::choices()
+     * Get choices mapping.
      */
     protected static function choices(): array
     {
@@ -93,6 +141,26 @@ abstract class ChoiceEnum extends SimpleChoiceEnum implements \JsonSerializable 
      */
     public function jsonSerialize() {
         return $this->getReadable();
+    }
+
+    /**
+     * Compare with another value.
+     */
+    public function equals($other): bool
+    {
+        if ($other instanceof static) {
+            return $this->value === $other->value;
+        }
+
+        return $this->value === $other;
+    }
+
+    /**
+     * String representation.
+     */
+    public function __toString(): string
+    {
+        return (string) $this->value;
     }
 
 }

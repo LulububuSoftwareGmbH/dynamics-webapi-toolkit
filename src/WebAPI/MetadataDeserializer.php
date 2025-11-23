@@ -20,9 +20,9 @@
 
 namespace AlexaCRM\WebAPI;
 
+use AlexaCRM\Enum\ChoiceEnum;
 use AlexaCRM\StrongSerializer\Deserializer;
 use AlexaCRM\StrongSerializer\Reference;
-use Elao\Enum\EnumInterface;
 
 /**
  * Provides deserializing capability with special enum treatment.
@@ -45,7 +45,7 @@ class MetadataDeserializer extends Deserializer {
         $className = $type->getClassName( $data );
 
         // Create enums separately.
-        if ( is_subclass_of( $className, EnumInterface::class ) ) {
+        if ( is_subclass_of( $className, ChoiceEnum::class ) ) {
             return $className::$data();
         }
 

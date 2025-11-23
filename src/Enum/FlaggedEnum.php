@@ -21,17 +21,35 @@
 
 namespace AlexaCRM\Enum;
 
-use Elao\Enum\AutoDiscoveredValuesTrait;
-
-abstract class FlaggedEnum extends \Elao\Enum\FlaggedEnum {
-
-    use AutoDiscoveredValuesTrait;
+abstract class FlaggedEnum extends ChoiceEnum {
 
     /** @var array */
     private static $readables = [];
 
     /**
-     * {@inheritdoc}
+     * Get all possible values for this enum.
+     */
+    public static function values(): array
+    {
+        $enumType = static::class;
+        $r = new \ReflectionClass($enumType);
+        $values = $r->getConstants();
+
+        if (PHP_VERSION_ID >= 70100) {
+            $values = array_filter($values, function (string $k) use ($r) {
+                return $r->getReflectionConstant($k)->isPublic();
+            }, ARRAY_FILTER_USE_KEY);
+        }
+
+        $values = array_filter($values, function ($v) {
+            return \is_int($v) && 0 === ($v & $v - 1) && $v > 0;
+        });
+
+        return array_values($values);
+    }
+
+    /**
+     * Get readable names for all values.
      */
     public static function readables(): array
     {

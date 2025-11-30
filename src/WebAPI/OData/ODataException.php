@@ -48,7 +48,7 @@ class ODataException extends Exception {
      * @param object $response OData error response object
      * @param RequestException $inner
      */
-    public function __construct( $response, RequestException $inner = null ) {
+    public function __construct( $response, ?RequestException $inner = null ) {
         $this->message = $response;
         if ( $inner !== null ) {
             $guzzleRequest = $inner->getRequest();
